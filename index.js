@@ -24,18 +24,48 @@ async function iniciarRPA() {
     const page = await browser.newPage();
 
     // --- NOVA ETAPA: LOGIN NO SEI ---
+    // --- NOVA ETAPA: LOGIN NO SEI ---
     console.log("🔐 Fazendo login no SEI...");
     try {
-        // Substitua pela URL exata da tela de login do SEI que você usa
         await page.goto('https://cidades.sei.sp.gov.br/rasaopaulo/sip/login.php', { waitUntil: 'networkidle2' });
         
-        // Digita usuário e senha (verifique se os IDs dos campos '#txtUsuario' e '#pwdSenha' são esses mesmos no inspecionar elemento)
+        // Aguarda os campos de usuário e senha aparecerem (se adaptando aos IDs comuns do SEI)
+        await page.waitForSelector('#txtUsuario', { timeout: 10000 });
+        
         await page.type('#txtUsuario', SEI_USER);
         await page.type('#pwdSenha', SEI_PASS);
         
-        // Clica no botão de entrar e aguarda a página principal carregar
-        await page.click('#sbmLogin');
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Tenta preencher o Órgão, se o campo existir na tela
+        try {
+            const orgSelect = await page.$('#selOrgao');
+            if (orgSelect) {
+                console.log("🏢 Selecionando órgão MCRUZ...");
+                await page.select('#selOrgao', 'MCRUZ');
+            }
+        } catch(err) {
+            console.log("ℹ️ Campo de Órgão não encontrado, prosseguindo com o login.");
+        }
+        
+        // Clica no botão de login (tentando os IDs mais comuns)
+        const botoesLogin = ['#sbmLogin', '#Acessar', '#btnAcessar'];
+        let botaoClicado = false;
+        
+        for (const seletor of botoesLogin) {
+            try {
+                const botao = await page.$(seletor);
+                if (botao) {
+                    await page.click(seletor);
+                    botaoClicado = true;
+                    break;
+                }
+            } catch(e) {}
+        }
+        
+        if (!botaoClicado) {
+             throw new Error("Não foi possível encontrar o botão de login.");
+        }
+
+        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
         console.log("✅ Login realizado com sucesso!\n");
         
     } catch (e) {

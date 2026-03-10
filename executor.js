@@ -38,12 +38,55 @@ async function processarFila(processos) {
     const page = await browser.newPage();
 
     // 1. FAZER LOGIN NO SEI
-    console.log("Fazendo login no SEI...");
-    await page.goto('https://cidades.sei.sp.gov.br/rasaopaulo/sip/login.php');
-    await page.type('#txtUsuario', SEI_USER);
-    await page.type('#pwdSenha', SEI_PASS);
-    await page.click('#sbmLogin');
-    await page.waitForNavigation();
+    // --- NOVA ETAPA: LOGIN NO SEI ---
+    console.log("🔐 Fazendo login no SEI...");
+    try {
+        await page.goto('https://cidades.sei.sp.gov.br/rasaopaulo/sip/login.php', { waitUntil: 'networkidle2' });
+        
+        // Aguarda os campos de usuário e senha aparecerem (se adaptando aos IDs comuns do SEI)
+        await page.waitForSelector('#txtUsuario', { timeout: 10000 });
+        
+        await page.type('#txtUsuario', SEI_USER);
+        await page.type('#pwdSenha', SEI_PASS);
+        
+        // Tenta preencher o Órgão, se o campo existir na tela
+        try {
+            const orgSelect = await page.$('#selOrgao');
+            if (orgSelect) {
+                console.log("🏢 Selecionando órgão MCRUZ...");
+                await page.select('#selOrgao', 'MCRUZ');
+            }
+        } catch(err) {
+            console.log("ℹ️ Campo de Órgão não encontrado, prosseguindo com o login.");
+        }
+        
+        // Clica no botão de login (tentando os IDs mais comuns)
+        const botoesLogin = ['#sbmLogin', '#Acessar', '#btnAcessar'];
+        let botaoClicado = false;
+        
+        for (const seletor of botoesLogin) {
+            try {
+                const botao = await page.$(seletor);
+                if (botao) {
+                    await page.click(seletor);
+                    botaoClicado = true;
+                    break;
+                }
+            } catch(e) {}
+        }
+        
+        if (!botaoClicado) {
+             throw new Error("Não foi possível encontrar o botão de login.");
+        }
+
+        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 });
+        console.log("✅ Login realizado com sucesso!\n");
+        
+    } catch (e) {
+        console.error("❌ Falha na etapa de login:", e.message);
+        await browser.close();
+        return;
+    }
 
     // 2. EXECUTAR AÇÕES
     for (let processo of processos) {
