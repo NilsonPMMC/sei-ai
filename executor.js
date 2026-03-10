@@ -99,9 +99,11 @@ async function processarFila(processos) {
         // 1. Tratamento do processo e status
         const numeroTratado = encodeURIComponent(processo.numero_sei);
         const statusFinal = processo.acao_requisitada === 'APROVAR' ? 'APROVADO' : 'DEVOLVIDO';
-        const urlCompleta = `${API_URL}/${numeroTratado}/acao`;
+        
+        // 2. Monta a URL usando Query Parameter em vez de Path Parameter
+        const urlCompleta = `${API_URL}/acao?numero_sei=${numeroTratado}`;
 
-        // 2. Tenta o PATCH e imprime o detalhe em caso de erro
+        // 3. Tenta o PATCH
         try {
             console.log(`📡 Disparando PATCH para: ${urlCompleta}`);
             await axios.patch(urlCompleta, { novo_status: statusFinal });
