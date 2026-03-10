@@ -97,7 +97,7 @@ def get_fila(db: Session = Depends(get_db)) -> list[ProcessoResponse]:
     return [_to_response(p) for p in rows]
 
 
-@router.patch("/fila/{numero_sei:path}/acao", response_model=ProcessoResponse)
+@router.patch("/fila/acao", response_model=ProcessoResponse)
 def patch_fila_acao(
     numero_sei: str,
     body: ProcessoUpdateAction,
