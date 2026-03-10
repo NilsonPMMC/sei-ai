@@ -1,20 +1,48 @@
+require('dotenv').config();
 const puppeteer = require('puppeteer-core');
 const axios = require('axios');
 
+const SEI_USER = process.env.SEI_USER;
+const SEI_PASS = process.env.SEI_PASS;
+
 async function iniciarRPA() {
-    console.log("🤖 Iniciando Motor de IA - Conectando ao Chrome...");
+    console.log("🤖 Iniciando Motor de IA - Modo Servidor (Headless)...");
     
     let browser;
     try {
-        browser = await puppeteer.connect({ browserURL: 'http://127.0.0.1:9222', defaultViewport: null });
-        console.log("✅ Conectado à sessão do SEI!\n");
+        // Lança um novo Chrome invisível usando o binário do sistema Linux
+        browser = await puppeteer.launch({ 
+            headless: 'new',
+            executablePath: '/usr/bin/google-chrome', // Caminho padrão no Ubuntu
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+        });
     } catch (err) {
-        console.error("❌ Erro ao conectar no Chrome. Verifique a porta 9222.");
+        console.error("❌ Erro ao lançar o Chrome headless:", err.message);
         process.exit(1);
     }
 
-    const pages = await browser.pages();
-    const page = pages.find(p => p.url().includes('controlador.php')) || pages[0];
+    const page = await browser.newPage();
+
+    // --- NOVA ETAPA: LOGIN NO SEI ---
+    console.log("🔐 Fazendo login no SEI...");
+    try {
+        // Substitua pela URL exata da tela de login do SEI que você usa
+        await page.goto('https://cidades.sei.sp.gov.br/rasaopaulo/sip/login.php', { waitUntil: 'networkidle2' });
+        
+        // Digita usuário e senha (verifique se os IDs dos campos '#txtUsuario' e '#pwdSenha' são esses mesmos no inspecionar elemento)
+        await page.type('#txtUsuario', SEI_USER);
+        await page.type('#pwdSenha', SEI_PASS);
+        
+        // Clica no botão de entrar e aguarda a página principal carregar
+        await page.click('#sbmLogin');
+        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        console.log("✅ Login realizado com sucesso!\n");
+        
+    } catch (e) {
+        console.error("❌ Falha na etapa de login:", e.message);
+        await browser.close();
+        return;
+    }
 
     console.log("🔍 Minerando processos na caixa de entrada...");
 
