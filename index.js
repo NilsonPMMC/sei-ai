@@ -47,7 +47,7 @@ async function iniciarRPA() {
         }
         
         // Clica no botão de login (tentando os IDs mais comuns)
-        const botoesLogin = ['#sbmLogin', '#Acessar', '#btnAcessar'];
+        const botoesLogin = ['#sbmAcessar', '#sbmLogin', '#Acessar', '#btnAcessar'];
         let botaoClicado = false;
         
         for (const seletor of botoesLogin) {
