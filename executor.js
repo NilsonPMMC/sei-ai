@@ -96,8 +96,9 @@ async function processarFila(processos) {
             console.log("❌ Exigência registrada.");
         }
 
-        // Atualiza o banco para CONCLUIDO
-        await axios.put(`${API_URL}/${processo.numero_sei}?novo_status=CONCLUIDO`);
+        // Codifica o número do processo para a barra (/) não quebrar a rota da API
+        const numeroTratado = encodeURIComponent(processo.numero_sei);
+        await axios.put(`${API_URL}/${numeroTratado}?novo_status=CONCLUIDO`);
     }
 
     await browser.close();
