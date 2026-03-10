@@ -96,18 +96,22 @@ async function processarFila(processos) {
             console.log("❌ Exigência registrada.");
         }
 
-        // 1. Mascara a barra (/) do número do processo
+        // 1. Tratamento do processo e status
         const numeroTratado = encodeURIComponent(processo.numero_sei);
-        
-        // 2. Define o status final baseado na ação
         const statusFinal = processo.acao_requisitada === 'APROVAR' ? 'APROVADO' : 'DEVOLVIDO';
-        
-        // 3. Bate na rota correta da sua API (/acao) com o método PATCH
-        console.log(`Atualizando banco para ${statusFinal}...`);
-        await axios.patch(`${API_URL}/${numeroTratado}/acao`, { 
-            novo_status: statusFinal 
-        });
-        console.log(`✅ Processo ${processo.numero_sei} finalizado na fila!`);
+        const urlCompleta = `${API_URL}/${numeroTratado}/acao`;
+
+        // 2. Tenta o PATCH e imprime o detalhe em caso de erro
+        try {
+            console.log(`📡 Disparando PATCH para: ${urlCompleta}`);
+            await axios.patch(urlCompleta, { novo_status: statusFinal });
+            console.log(`✅ Processo ${processo.numero_sei} atualizado no banco!`);
+        } catch (erroApi) {
+            console.log(`❌ FALHA AO SALVAR NO BANCO:`);
+            console.log(`URL Tentada: ${erroApi.config?.url}`);
+            console.log(`Status HTTP: ${erroApi.response?.status}`);
+            console.log(`Resposta do Servidor:`, erroApi.response?.data || erroApi.message);
+        }
     }
 
     await browser.close();
