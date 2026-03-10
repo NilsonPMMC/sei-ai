@@ -96,9 +96,18 @@ async function processarFila(processos) {
             console.log("❌ Exigência registrada.");
         }
 
-        // Codifica o número do processo para a barra (/) não quebrar a rota da API
+        // 1. Mascara a barra (/) do número do processo
         const numeroTratado = encodeURIComponent(processo.numero_sei);
-        await axios.put(`${API_URL}/${numeroTratado}?novo_status=CONCLUIDO`);
+        
+        // 2. Define o status final baseado na ação
+        const statusFinal = processo.acao_requisitada === 'APROVAR' ? 'APROVADO' : 'DEVOLVIDO';
+        
+        // 3. Bate na rota correta da sua API (/acao) com o método PATCH
+        console.log(`Atualizando banco para ${statusFinal}...`);
+        await axios.patch(`${API_URL}/${numeroTratado}/acao`, { 
+            novo_status: statusFinal 
+        });
+        console.log(`✅ Processo ${processo.numero_sei} finalizado na fila!`);
     }
 
     await browser.close();
