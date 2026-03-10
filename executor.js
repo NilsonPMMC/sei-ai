@@ -2,7 +2,7 @@ require('dotenv').config();
 const puppeteer = require('puppeteer-core');
 const axios = require('axios');
 
-const API_URL = "http://127.0.0.1:8000/v1/fila";
+const API_URL = "http://127.0.0.1:8008/v1/fila";
 
 // TODO: Configurar credenciais do SEI via variáveis de ambiente
 const SEI_USER = process.env.SEI_USER;
