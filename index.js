@@ -13,7 +13,7 @@ async function iniciarRPA() {
         // Lança um novo Chrome invisível usando o binário do sistema Linux
         browser = await puppeteer.launch({ 
             headless: 'new',
-            executablePath: '/usr/bin/google-chrome', // Caminho padrão no Ubuntu
+            executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
             args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
     } catch (err) {

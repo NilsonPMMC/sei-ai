@@ -31,7 +31,7 @@ async function processarFila(processos) {
     // No Linux, precisamos usar o executável do Chromium ou Chrome instalado
     const browser = await puppeteer.launch({ 
         headless: 'new', // Roda sem interface gráfica
-        executablePath: '/usr/bin/google-chrome', // Caminho padrão no Ubuntu
+        executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
         args: ['--no-sandbox', '--disable-setuid-sandbox'] 
     });
 
