@@ -97,7 +97,7 @@ async function processarFila(processos) {
         }
 
         // Atualiza o banco para CONCLUIDO
-        await axios.patch(`${API_URL}/${processo.numero_sei}/status`, { novo_status: 'CONCLUIDO' });
+        await axios.put(`${API_URL}/${processo.numero_sei}?novo_status=CONCLUIDO`);
     }
 
     await browser.close();

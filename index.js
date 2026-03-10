@@ -201,7 +201,7 @@ async function iniciarRPA() {
 }
 
 async function classificarComIA(textoDocumento, listaAnexos, numeroProcesso) {
-    const endpoint = "http://localhost:8000/v1/triagem";
+    const endpoint = "http://127.0.0.1:8008/v1/triagem";
     const textoLimitado = textoDocumento.substring(0, 4000);
 
     const contextoEnriquecido = `
@@ -223,7 +223,7 @@ async function classificarComIA(textoDocumento, listaAnexos, numeroProcesso) {
 }
 
 async function salvarNaFila(numeroSei, decisaoIA, linkProcesso, listaAnexos) {
-    const endpointFila = "http://localhost:8000/v1/fila";
+    const endpointFila = "http://127.0.0.1:8008/v1/fila";
     const linkAcessoDireto = linkProcesso.replace('acao=procedimento_trabalhar', 'acao=procedimento_controlar');
 
     try {
