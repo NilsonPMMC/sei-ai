@@ -51,7 +51,12 @@ def _extrair_intencao(texto_processo: str) -> str | None:
         )
         intencao = (resp.choices[0].message.content or "").strip()
         return intencao if intencao else None
-    except Exception:
+    except Exception as e:
+        import traceback
+        print("\n" + "="*50)
+        print("❌ EXPLOSÃO NA API DA GROQ (INTENÇÃO):")
+        traceback.print_exc()
+        print("="*50 + "\n")
         return None
 
 
@@ -149,6 +154,12 @@ OPÇÕES DE SERVIÇOS DISPONÍVEIS (escolha o mais adequado, ou use rota de fuga
         logger.warning("JSON inválido na resposta da Groq: %s | conteudo=%r", e, conteudo_resposta[:200])
         return None
     except Exception as e:
+        import traceback
+        print("\n" + "="*50)
+        print("❌ EXPLOSÃO NA API DA GROQ (INFERÊNCIA):")
+        traceback.print_exc()
+        print("="*50 + "\n")
+        
         logger.error("Erro de API da Groq: %s", e)
         return {
             "servico_identificado": "ERRO DE API - Tente novamente",
