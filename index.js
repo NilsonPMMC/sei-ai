@@ -13,7 +13,9 @@ async function iniciarRPA() {
         // Lança um novo Chrome invisível usando o binário do sistema Linux
         browser = await puppeteer.launch({ 
             headless: 'new',
-            executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
+            executablePath: '/usr/bin/google-chrome-stable',
+            timeout: 60000,
+            protocolTimeout: 120000,
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
         });
     } catch (err) {
@@ -22,6 +24,9 @@ async function iniciarRPA() {
     }
 
     const page = await browser.newPage();
+
+    page.setDefaultNavigationTimeout(90000); 
+    page.setDefaultTimeout(90000);
 
     // --- NOVA ETAPA: LOGIN NO SEI ---
     console.log("🔐 Fazendo login no SEI...");

@@ -29,13 +29,18 @@ async function iniciarExecutor() {
 
 async function processarFila(processos) {
     // No Linux, precisamos usar o executável do Chromium ou Chrome instalado
-    const browser = await puppeteer.launch({ 
-        headless: 'new', // Roda sem interface gráfica
-        executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
+    browser = await puppeteer.launch({ 
+        headless: 'new',
+        executablePath: '/usr/bin/google-chrome-stable',
+        timeout: 60000,
+        protocolTimeout: 120000,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
     });
 
     const page = await browser.newPage();
+
+    page.setDefaultNavigationTimeout(90000); 
+    page.setDefaultTimeout(90000);
 
     // --- NOVA ETAPA: LOGIN NO SEI ---
     console.log("🔐 Fazendo login no SEI...");
