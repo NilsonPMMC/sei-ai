@@ -189,7 +189,7 @@ async function iniciarRPA() {
             console.log(`\n👁️ O QUE O ROBÔ LEU DO DOCUMENTO (${textoBruto.length} chars)`);
 
             const decisao = await classificarComIA(textoBruto, dadosArvore.anexos, numeroProcessoSEI);
-            console.log(`✅ DECISÃO DA IA:`, decisao.servico_identificado);
+            console.log("✅ DECISÃO DA IA:\n", JSON.stringify(decisao, null, 2));
 
             console.log(`💾 Salvando na Fila (sei_ai_db)...`);
             await salvarNaFila(numeroProcessoSEI, decisao, link, dadosArvore.anexos);
