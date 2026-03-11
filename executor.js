@@ -32,7 +32,7 @@ async function processarFila(processos) {
     const browser = await puppeteer.launch({ 
         headless: 'new', // Roda sem interface gráfica
         executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
-        args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
     });
 
     const page = await browser.newPage();

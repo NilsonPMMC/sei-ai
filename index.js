@@ -14,7 +14,7 @@ async function iniciarRPA() {
         browser = await puppeteer.launch({ 
             headless: 'new',
             executablePath: '/usr/bin/google-chrome-stable', // Caminho padrão no Ubuntu
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] 
         });
     } catch (err) {
         console.error("❌ Erro ao lançar o Chrome headless:", err.message);
