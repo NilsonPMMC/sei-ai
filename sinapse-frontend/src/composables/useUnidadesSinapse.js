@@ -4,7 +4,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://protocolosei.mogidascruzes.sp.gov.br'
 const SINAPSE_PROXY_BASE = `${API_BASE}/v1/sinapse`
 
 function _extrairLista(data) {
