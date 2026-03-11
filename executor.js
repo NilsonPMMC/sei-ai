@@ -70,7 +70,7 @@ async function processarFila(processos) {
         
         // Dispara o clique diretamente no DOM e aguarda o carregamento simultaneamente
         await Promise.all([
-            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }),
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
             page.evaluate(() => {
                 document.getElementById('sbmAcessar').click();
             })

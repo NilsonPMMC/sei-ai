@@ -56,7 +56,7 @@ async function iniciarRPA() {
         
         // Dispara o clique diretamente no DOM e aguarda o carregamento simultaneamente
         await Promise.all([
-            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }),
+            page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
             page.evaluate(() => {
                 document.getElementById('sbmAcessar').click();
             })
@@ -89,7 +89,7 @@ async function iniciarRPA() {
         console.log(`⏳ Abrindo processo...`);
         
         try {
-            await abaProcessamento.goto(link, { waitUntil: 'domcontentloaded', timeout: 15000 });
+            await abaProcessamento.goto(link, { waitUntil: 'domcontentloaded', timeout: 30000 });
             await new Promise(r => setTimeout(r, 3000));
 
             const frameArvore = abaProcessamento.frames().find(f => f.name() === 'ifrArvore');
