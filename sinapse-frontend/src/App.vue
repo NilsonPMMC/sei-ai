@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useUnidadesSinapse } from './composables/useUnidadesSinapse'
 import SGDLeDataTable from './components/SGDLeDataTable.vue'
 
-const API_BASE = 'https://protocolosei.mogidascruzes.sp.gov.br'
+const API_BASE = 'http://localhost:8000'
 const processos = ref([])
 const carregando = ref(true)
 const erro = ref(null)
