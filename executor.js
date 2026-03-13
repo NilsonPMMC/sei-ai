@@ -28,8 +28,7 @@ async function iniciarExecutor() {
 }
 
 async function processarFila(processos) {
-    // No Linux, precisamos usar o executável do Chromium ou Chrome instalado
-    browser = await puppeteer.launch({ 
+    const browser = await puppeteer.launch({ 
         headless: 'new',
         executablePath: '/usr/bin/google-chrome-stable',
         timeout: 60000,
@@ -38,24 +37,18 @@ async function processarFila(processos) {
     });
 
     const page = await browser.newPage();
-
     page.setDefaultNavigationTimeout(90000); 
     page.setDefaultTimeout(90000);
 
-    // --- NOVA ETAPA: LOGIN NO SEI ---
     console.log("🔐 Fazendo login no SEI...");
     try {
         await page.goto('https://cidades.sei.sp.gov.br/rasaopaulo/sip/login.php', { waitUntil: 'networkidle2' });
-        
-        // Aguarda os campos renderizarem
         await page.waitForSelector('#txtUsuario', { timeout: 10000 });
         await page.waitForSelector('#pwdSenha', { timeout: 10000 });
         
-        // Digita como um humano (delay de 50ms) para enganar a máscara do SEI
         await page.type('#txtUsuario', SEI_USER, { delay: 50 });
         await page.type('#pwdSenha', SEI_PASS, { delay: 50 });
         
-        // CORREÇÃO: Seleciona o órgão pelo ID numérico correto (22 = MCRUZ)
         try {
             const orgSelect = await page.$('#selOrgao');
             if (orgSelect) {
@@ -67,61 +60,69 @@ async function processarFila(processos) {
         }
         
         console.log("🖱️ Forçando clique via JavaScript no botão ACESSAR...");
-        
-        // Dispara o clique diretamente no DOM e aguarda o carregamento simultaneamente
         await Promise.all([
             page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
-            page.evaluate(() => {
-                document.getElementById('sbmAcessar').click();
-            })
+            page.evaluate(() => document.getElementById('sbmAcessar').click())
         ]);
 
         console.log("✅ Login realizado com sucesso!\n");
-        
     } catch (e) {
         console.error("❌ Falha na etapa de login:", e.message);
         await browser.close();
         return;
     }
 
-    // 2. EXECUTAR AÇÕES
+    // 2. EXECUTAR AÇÕES (NOVO FLUXO: ANOTAÇÕES)
     for (let processo of processos) {
         console.log(`Atuando no processo ${processo.numero_sei}...`);
         
-        // Abre o link do processo
-        await page.goto(processo.link_sei, { waitUntil: 'domcontentloaded' });
-        
-        if (processo.acao_requisitada === 'APROVAR') {
-            // Lógica para clicar no botão "Enviar Processo"
-            // await page.click('#btnEnviar'); 
-            // await page.type('#txtUnidade', processo.unidade_destino);
-            console.log("✅ Processo tramitado.");
-        } else if (processo.acao_requisitada === 'DEVOLVER') {
-            // Lógica para incluir despacho de exigência
-            console.log("❌ Exigência registrada.");
-        }
-
-        // 1. Tratamento do processo e status
-        const numeroTratado = encodeURIComponent(processo.numero_sei);
-        const statusFinal = processo.acao_requisitada === 'APROVAR' ? 'APROVADO' : 'DEVOLVIDO';
-        
-        // 2. Monta a URL usando Query Parameter em vez de Path Parameter
-        const urlCompleta = `${API_URL}/acao?numero_sei=${numeroTratado}`;
-
-        // 3. Tenta o PATCH
         try {
+            await page.goto(processo.link_sei, { waitUntil: 'networkidle2' });
+            
+            // 2.1 Acessar o iframe principal onde fica a barra de ícones
+            const frameProcesso = await page.frames().find(f => f.name() === 'ifrVisualizacao');
+            if (!frameProcesso) throw new Error("Iframe de visualização não encontrado.");
+
+            // 2.2 Localizar o botão de Anotação (geralmente uma imagem com title "Anotações")
+            await frameProcesso.waitForSelector('img[title*="Anotação"], a[title*="Anotação"]', { timeout: 10000 });
+
+            // 2.3 Clicar e capturar o Popup que o SEI abre
+            const [popup] = await Promise.all([
+                new Promise(resolve => browser.once('targetcreated', target => resolve(target.page()))),
+                frameProcesso.click('img[title*="Anotação"], a[title*="Anotação"]')
+            ]);
+
+            if (!popup) throw new Error("Popup de anotação não abriu.");
+
+            // 2.4 Preencher o texto no popup
+            await popup.waitForSelector('#txaDescricao', { timeout: 10000 });
+            
+            // Monta o texto bonitão (Ajuste as propriedades conforme sua API devolve)
+            const textoAnotacao = `🤖 IA (Triagem Prévia):\nServiço: ${processo.servico_nome || 'Não identificado'}\nResumo: ${processo.resumo_ia || 'Sem resumo disponível.'}\nDocs: ${processo.status_documentacao || 'Não avaliado'}`;
+            
+            await popup.type('#txaDescricao', textoAnotacao, { delay: 10 });
+            
+            // 2.5 Salvar
+            await popup.click('#btnSalvar');
+            
+            // Espera a requisição terminar de salvar (delay seguro)
+            await new Promise(r => setTimeout(r, 2500));
+            if (!popup.isClosed()) await popup.close();
+
+            console.log("✅ Anotação registrada com sucesso no SEI.");
+
+            // 3. Atualiza no Banco
+            const numeroTratado = encodeURIComponent(processo.numero_sei);
+            const urlCompleta = `${API_URL}/acao?numero_sei=${numeroTratado}`;
+
             console.log(`📡 Disparando PATCH para: ${urlCompleta}`);
-            await axios.patch(urlCompleta, { novo_status: statusFinal });
+            await axios.patch(urlCompleta, { novo_status: 'TRIADO_COM_ANOTACAO' });
             console.log(`✅ Processo ${processo.numero_sei} atualizado no banco!`);
-        } catch (erroApi) {
-            console.log(`❌ FALHA AO SALVAR NO BANCO:`);
-            console.log(`URL Tentada: ${erroApi.config?.url}`);
-            console.log(`Status HTTP: ${erroApi.response?.status}`);
-            console.log(`Resposta do Servidor:`, erroApi.response?.data || erroApi.message);
+
+        } catch (erroProcesso) {
+            console.log(`❌ Falha ao atuar no processo ${processo.numero_sei}:`, erroProcesso.message);
         }
     }
 
     await browser.close();
 }
-
-iniciarExecutor();
