@@ -37,7 +37,9 @@ function _extrairUnidades(data) {
   return []
 }
 
-/** Lista computada: reflete filtros de Status, Unidade e busca textual automaticamente */
+/** Lista computada: reflete filtros de Status, Unidade e busca textual automaticamente
+ *  e mantém ordenação decrescente (mais recente no topo).
+ */
 const processosFiltrados = computed(() => {
   let lista = [...processos.value]
   if (filtroStatus.value) {
@@ -64,7 +66,14 @@ const processosFiltrados = computed(() => {
       return termos.every((t) => texto.includes(t))
     })
   }
-  return lista
+  // Ordena por data_atualizacao, depois data_criacao, depois id (todos decrescente)
+  return lista.sort((a, b) => {
+    const da = new Date(a.data_atualizacao || a.data_criacao || 0).getTime()
+    const db = new Date(b.data_atualizacao || b.data_criacao || 0).getTime()
+    if (da !== db) return db - da
+    if (a.id != null && b.id != null) return b.id - a.id
+    return 0
+  })
 })
 
 /** Lista filtrada — serve tanto para Cards quanto para DataTable */
@@ -327,16 +336,37 @@ onMounted(() => {
             <span v-else class="font-mono text-sm font-medium text-slate-600 truncate">
               {{ p.numero_sei }}
             </span>
-            <span
-              :class="[
-                'shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium',
-                p.status_documentacao === 'COMPLETA'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-amber-100 text-amber-800',
-              ]"
-            >
-              {{ p.status_documentacao }}
-            </span>
+            <div class="flex items-center gap-1.5">
+              <!-- Badge de completude da documentação -->
+              <span
+                :class="[
+                  'shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium',
+                  p.status_documentacao === 'COMPLETA'
+                    ? 'bg-green-100 text-green-800'
+                    : p.status_documentacao === 'ERRO'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-amber-100 text-amber-800',
+                ]"
+              >
+                {{ p.status_documentacao || '—' }}
+              </span>
+              <!-- Badge de status da ação do robô / RPA -->
+              <span
+                v-if="p.status_acao"
+                :class="[
+                  'shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium',
+                  p.status_acao === 'CONCLUIDO' || p.status_acao === 'ATUADO'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-700',
+                ]"
+              >
+                {{
+                  p.status_acao === 'CONCLUIDO' || p.status_acao === 'ATUADO'
+                    ? '✅ Triado - Aguardando Encaminhamento'
+                    : '⏳ Aguardando IA'
+                }}
+              </span>
+            </div>
           </div>
 
           <!-- Corpo do Card -->

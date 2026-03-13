@@ -61,23 +61,44 @@ const emit = defineEmits(['aprovar', 'devolver'])
               {{ p.resumo_ia || 'Sem resumo' }}
             </p>
           </td>
-          <td class="px-4 py-3 text-sm text-slate-600">
+          <td class="px-4 py-3">
             {{ getUnidade(p) }}
           </td>
           <td class="px-4 py-3 text-sm text-slate-600">
             {{ p.data_criacao ? new Date(p.data_criacao).toLocaleDateString('pt-BR') : '—' }}
           </td>
           <td class="px-4 py-3">
-            <span
-              :class="[
-                'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                p.status_documentacao === 'COMPLETA'
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-amber-100 text-amber-800',
-              ]"
-            >
-              {{ p.status_documentacao }}
-            </span>
+            <div class="flex flex-col gap-1">
+              <!-- Badge de completude da documentação -->
+              <span
+                :class="[
+                  'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                  p.status_documentacao === 'COMPLETA'
+                    ? 'bg-green-100 text-green-800'
+                    : p.status_documentacao === 'ERRO'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-amber-100 text-amber-800',
+                ]"
+              >
+                {{ p.status_documentacao || '—' }}
+              </span>
+              <!-- Badge de status da ação do robô / RPA -->
+              <span
+                v-if="p.status_acao"
+                :class="[
+                  'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                  p.status_acao === 'CONCLUIDO' || p.status_acao === 'ATUADO'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-700',
+                ]"
+              >
+                {{
+                  p.status_acao === 'CONCLUIDO' || p.status_acao === 'ATUADO'
+                    ? '✅ Triado - Aguardando Encaminhamento'
+                    : '⏳ Aguardando IA'
+                }}
+              </span>
+            </div>
           </td>
           <td class="px-4 py-3">
             <button
