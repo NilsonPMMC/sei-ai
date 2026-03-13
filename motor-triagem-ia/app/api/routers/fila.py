@@ -86,11 +86,12 @@ def post_fila(body: ProcessoCreate, db: Session = Depends(get_db)) -> ProcessoRe
 @router.get("/fila", response_model=list[ProcessoResponse])
 def get_fila(db: Session = Depends(get_db)) -> list[ProcessoResponse]:
     """
-    Lista processos com status_acao == 'PENDENTE', ordenado por data_criacao desc.
+    Lista processos aguardando atuação do robô ou encaminhamento humano,
+    ordenado por data_criacao desc.
     """
     rows = (
         db.query(FilaProcesso)
-        .filter(FilaProcesso.status_acao == "PENDENTE")
+        .filter(FilaProcesso.status_acao.in_(["PENDENTE", "AGUARDANDO_ROBO"]))
         .order_by(FilaProcesso.data_criacao.desc())
         .all()
     )
